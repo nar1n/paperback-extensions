@@ -306,7 +306,7 @@ exports.MangaMint = exports.MangaMintInfo = void 0;
 const paperback_extensions_common_1 = require("paperback-extensions-common");
 const MANGAMINT_API_BASE = "https://mangamint.kaedenoki.net/api";
 exports.MangaMintInfo = {
-    version: "1.0.0",
+    version: "1.0.1",
     name: "MangaMint",
     icon: "icon.png",
     author: "nar1n",
@@ -430,7 +430,7 @@ class MangaMint extends paperback_extensions_common_1.Source {
             let request = createRequestObject({
                 url: `${MANGAMINT_API_BASE}/search/`,
                 method: "GET",
-                param: searchTitle
+                param: searchTitle.replace(' ', '%20')
             });
             const response = yield this.requestManager.schedule(request, 3);
             let searchResults = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
