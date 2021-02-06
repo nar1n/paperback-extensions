@@ -10,7 +10,7 @@ describe("MangaMint Tests", function () {
   var chaiAsPromised = require("chai-as-promised");
   chai.use(chaiAsPromised);
 
-  var mangaId = "after-transformation-mine-and-her-wild-fantasy";
+  var mangaId = "tokyo卍revengers";
 
   it("Retrieve Manga Details", async () => {
     let details = await wrapper.getMangaDetails(source, mangaId);
@@ -40,7 +40,6 @@ describe("MangaMint Tests", function () {
     expect(entry.time, "No date present").to.exist;
     expect(entry.name, "No title available").to.not.be.empty;
     expect(entry.chapNum, "No chapter number present").to.exist;
-    expect(entry.volume, "No volume data available").to.not.be.empty;
   });
 
   it("Get Chapter Details", async () => {

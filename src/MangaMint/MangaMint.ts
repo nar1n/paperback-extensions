@@ -15,9 +15,9 @@ import {
 const MANGAMINT_API_BASE = "https://mangamint.kaedenoki.net/api"
 
 export const MangaMintInfo: SourceInfo = {
-  version: "1.0.7",
+  version: "1.0.0",
   name: "MangaMint",
-  icon: "icon.jpg",
+  icon: "icon.png",
   author: "nar1n",
   authorWebsite: "https://github.com/nar1n",
   description: "Extension that pulls manga from mangamint.kaedenoki.net",
@@ -47,14 +47,14 @@ export class MangaMint extends Source {
     let request = createRequestObject({
       url: `${MANGAMINT_API_BASE}/manga/detail/`,
       method: "GET",
-      param: mangaId
+      param: encodeURIComponent(mangaId)
     })
 
-    let response = await this.requestManager.schedule(request, 3)
+    let response = await this.requestManager.schedule(request, 1)
     let mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data
 
     while (requestTry <= 3 && mangaDetails["title"] == "") {
-      response = await this.requestManager.schedule(request, 3)
+      response = await this.requestManager.schedule(request, 1)
       mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data
       requestTry++
     }
@@ -82,14 +82,14 @@ export class MangaMint extends Source {
     let request = createRequestObject({
       url: `${MANGAMINT_API_BASE}/manga/detail/`,
       method: "GET",
-      param: mangaId
+      param: encodeURIComponent(mangaId)
     })
 
-    let response = await this.requestManager.schedule(request, 3)
+    let response = await this.requestManager.schedule(request, 1)
     let mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data
 
     while (requestTry <= 3 && mangaDetails["title"] == "") {
-      response = await this.requestManager.schedule(request, 3)
+      response = await this.requestManager.schedule(request, 1)
       mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data
       requestTry++
     }
@@ -102,7 +102,7 @@ export class MangaMint extends Source {
         createChapter({
           id: chapter["chapter_endpoint"],
           mangaId: mangaId,
-          chapNum: Number(chapterNumber),
+          chapNum: Number(chapter["chapter_title"].replace(/^\D+/, '')),
           langCode: LanguageCode.INDONESIAN,
           name: chapter["chapter_title"],
           time: new Date()
@@ -117,14 +117,14 @@ export class MangaMint extends Source {
     let request = createRequestObject({
       url: `${MANGAMINT_API_BASE}/chapter/`,
       method: "GET",
-      param: chapterId
+      param: encodeURIComponent(chapterId)
     })
 
-    let response = await this.requestManager.schedule(request, 3)
+    let response = await this.requestManager.schedule(request, 1)
     let chapterDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data
 
     while (requestTry <= 3 && chapterDetails["chapter_pages"] == 0) {
-      response = await this.requestManager.schedule(request, 3)
+      response = await this.requestManager.schedule(request, 1)
       chapterDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data
       requestTry++
     }
