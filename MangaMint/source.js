@@ -306,9 +306,9 @@ exports.MangaMint = exports.MangaMintInfo = void 0;
 const paperback_extensions_common_1 = require("paperback-extensions-common");
 const MANGAMINT_API_BASE = "https://mangamint.kaedenoki.net/api";
 exports.MangaMintInfo = {
-    version: "1.0.7",
+    version: "1.0.0",
     name: "MangaMint",
-    icon: "icon.jpg",
+    icon: "icon.png",
     author: "nar1n",
     authorWebsite: "https://github.com/nar1n",
     description: "Extension that pulls manga from mangamint.kaedenoki.net",
@@ -340,12 +340,12 @@ class MangaMint extends paperback_extensions_common_1.Source {
             let request = createRequestObject({
                 url: `${MANGAMINT_API_BASE}/manga/detail/`,
                 method: "GET",
-                param: mangaId
+                param: encodeURIComponent(mangaId)
             });
-            let response = yield this.requestManager.schedule(request, 3);
+            let response = yield this.requestManager.schedule(request, 1);
             let mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
             while (requestTry <= 3 && mangaDetails["title"] == "") {
-                response = yield this.requestManager.schedule(request, 3);
+                response = yield this.requestManager.schedule(request, 1);
                 mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
                 requestTry++;
             }
@@ -371,12 +371,12 @@ class MangaMint extends paperback_extensions_common_1.Source {
             let request = createRequestObject({
                 url: `${MANGAMINT_API_BASE}/manga/detail/`,
                 method: "GET",
-                param: mangaId
+                param: encodeURIComponent(mangaId)
             });
-            let response = yield this.requestManager.schedule(request, 3);
+            let response = yield this.requestManager.schedule(request, 1);
             let mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
             while (requestTry <= 3 && mangaDetails["title"] == "") {
-                response = yield this.requestManager.schedule(request, 3);
+                response = yield this.requestManager.schedule(request, 1);
                 mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
                 requestTry++;
             }
@@ -387,7 +387,7 @@ class MangaMint extends paperback_extensions_common_1.Source {
                 chapters.push(createChapter({
                     id: chapter["chapter_endpoint"],
                     mangaId: mangaId,
-                    chapNum: Number(chapterNumber),
+                    chapNum: Number(chapter["chapter_title"].replace(/^\D+/, '')),
                     langCode: paperback_extensions_common_1.LanguageCode.INDONESIAN,
                     name: chapter["chapter_title"],
                     time: new Date()
@@ -402,12 +402,12 @@ class MangaMint extends paperback_extensions_common_1.Source {
             let request = createRequestObject({
                 url: `${MANGAMINT_API_BASE}/chapter/`,
                 method: "GET",
-                param: chapterId
+                param: encodeURIComponent(chapterId)
             });
-            let response = yield this.requestManager.schedule(request, 3);
+            let response = yield this.requestManager.schedule(request, 1);
             let chapterDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
             while (requestTry <= 3 && chapterDetails["chapter_pages"] == 0) {
-                response = yield this.requestManager.schedule(request, 3);
+                response = yield this.requestManager.schedule(request, 1);
                 chapterDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
                 requestTry++;
             }
