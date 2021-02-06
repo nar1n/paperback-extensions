@@ -15,7 +15,7 @@ import {
 const MANGAMINT_API_BASE = "https://mangamint.kaedenoki.net/api"
 
 export const MangaMintInfo: SourceInfo = {
-  version: "1.0.0",
+  version: "1.0.1",
   name: "MangaMint",
   icon: "icon.png",
   author: "nar1n",
@@ -149,7 +149,7 @@ export class MangaMint extends Source {
     let request = createRequestObject({
       url: `${MANGAMINT_API_BASE}/search/`,
       method: "GET",
-      param: searchTitle
+      param: searchTitle.replace(' ', '%20')
     })
 
     const response = await this.requestManager.schedule(request, 3)
