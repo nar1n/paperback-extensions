@@ -617,19 +617,19 @@ const CHAPTER_LIST_ENDPOINT = MANGADEX_API_V2 + '/manga';
 const CHAPTER_DETAILS_ENDPOINT = MANGADEX_API_V2 + '/chapter';
 const SEARCH_ENDPOINT = PAPERBACK_API + '/search';
 exports.MangaDexInfo = {
-    author: 'Neko',
-    description: 'Overwrites SafeDex,unlocks all mangas MangaDex has to offer and loads slightly faster. supports notifications',
+    author: 'nar1n',
+    description: 'Prevents MangaDex from making refresh loads infinitely',
     icon: 'icon.png',
-    name: 'MangaDex Unlocked',
-    version: '2.0.7',
-    authorWebsite: 'https://github.com/Pogogo007/extensions-main-promises',
+    name: 'MangaDex Unlinked',
+    version: '3.0.0',
+    authorWebsite: 'https://github.com/nar1n',
     websiteBaseURL: MANGADEX_DOMAIN,
     hentaiSource: false,
     language: paperback_extensions_common_1.LanguageCode.ENGLISH,
     sourceTags: [
         {
-            text: 'Recommended',
-            type: paperback_extensions_common_1.TagType.BLUE,
+            text: 'Experimental',
+            type: paperback_extensions_common_1.TagType.RED,
         },
     ],
 };
@@ -781,38 +781,6 @@ class MangaDex extends paperback_extensions_common_1.Source {
             yield Promise.all(promises);
         });
     }
-    filterUpdatedManga(mangaUpdatesFoundCallback, time, ids) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const allManga = new Set(ids);
-            let hasManga = true;
-            let page = 1;
-            while (hasManga) {
-                const request = createRequestObject({
-                    url: 'https://mangadex.org/titles/0/' + (page++).toString(),
-                    method: 'GET',
-                    incognito: true,
-                    cookies: [
-                        createCookie({
-                            name: 'mangadex_title_mode',
-                            value: '2',
-                            domain: MANGADEX_DOMAIN,
-                        }),
-                    ],
-                });
-                // eslint-disable-next-line no-await-in-loop
-                const response = yield this.requestManager.schedule(request, 1);
-                const selector = this.cheerio.load(response.data);
-                const updatedManga = this.parser.filterUpdatedManga(selector, time, allManga);
-                hasManga = updatedManga.hasMore;
-                if (updatedManga.updates.length > 0) {
-                    // If we found updates on this page, notify the app
-                    // This is needed so that the app can save the updates
-                    // in case the background job is killed by iOS
-                    mangaUpdatesFoundCallback(createMangaUpdates({ ids: updatedManga.updates }));
-                }
-            }
-        });
-    }
     constructSearchRequest(query, page, items = 50) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         return createRequestObject({
@@ -877,6 +845,7 @@ exports.MangaDex = MangaDex;
 /* eslint-disable camelcase, @typescript-eslint/explicit-module-boundary-types, radix, unicorn/filename-case */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Parser = void 0;
+const MANGAPLUS_GROUP_ID = 9097;
 class Parser {
     parseMangaDetails(json) {
         var _a;
@@ -936,16 +905,18 @@ class Parser {
         let chapters = [];
         const groups = Object.assign({}, ...json.data.groups.map((x) => ({ [x.id]: x.name })));
         for (const chapter of json.data.chapters) {
-            chapters.push(createChapter({
-                id: chapter.id.toString(),
-                mangaId: mangaId,
-                chapNum: Number(chapter.chapter),
-                langCode: chapter.language,
-                volume: Number.isNaN(chapter.volume) ? 0 : Number(chapter.volume),
-                group: chapter.groups.map((x) => groups[x]).join(', '),
-                name: chapter.title,
-                time: new Date(Number(chapter.timestamp) * 1000)
-            }));
+            if (!chapter.groups.includes(MANGAPLUS_GROUP_ID)) {
+                chapters.push(createChapter({
+                    id: chapter.id.toString(),
+                    mangaId: mangaId,
+                    chapNum: Number(chapter.chapter),
+                    langCode: chapter.language,
+                    volume: Number.isNaN(chapter.volume) ? 0 : Number(chapter.volume),
+                    group: chapter.groups.map((x) => groups[x]).join(', '),
+                    name: chapter.title,
+                    time: new Date(Number(chapter.timestamp) * 1000)
+                }));
+            }
         }
         return chapters;
     }
