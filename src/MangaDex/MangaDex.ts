@@ -10,7 +10,6 @@ import {
   SourceInfo,
   LanguageCode,
   TagType,
-  MangaUpdates,
   Request
 } from 'paperback-extensions-common'
 
@@ -39,19 +38,19 @@ const CHAPTER_DETAILS_ENDPOINT = MANGADEX_API_V2 + '/chapter'
 const SEARCH_ENDPOINT = PAPERBACK_API + '/search'
 
 export const MangaDexInfo: SourceInfo = {
-  author: 'Neko',
-  description: 'Overwrites SafeDex,unlocks all mangas MangaDex has to offer and loads slightly faster. supports notifications',
+  author: 'nar1n',
+  description: 'Prevents MangaDex from making refresh loads infinitely',
   icon: 'icon.png',
-  name: 'MangaDex Unlocked',
-  version: '2.0.7',
-  authorWebsite: 'https://github.com/Pogogo007/extensions-main-promises',
+  name: 'MangaDex Unlinked',
+  version: '3.0.0',
+  authorWebsite: 'https://github.com/nar1n',
   websiteBaseURL: MANGADEX_DOMAIN,
   hentaiSource: false,
   language: LanguageCode.ENGLISH,
   sourceTags: [
     {
-      text: 'Recommended',
-      type: TagType.BLUE,
+      text: 'Experimental',
+      type: TagType.RED,
     },
   ],
 }
@@ -216,41 +215,6 @@ export class MangaDex extends Source {
 
     // Make sure the function completes
     await Promise.all(promises)
-  }
-
-  async filterUpdatedManga(mangaUpdatesFoundCallback: (updates: MangaUpdates) => void, time: Date, ids: string[]): Promise<void> {
-    const allManga = new Set(ids)
-    let hasManga = true
-    let page = 1
-
-    while (hasManga) {
-      const request = createRequestObject({
-        url: 'https://mangadex.org/titles/0/' + (page++).toString(),
-        method: 'GET',
-        incognito: true,
-        cookies: [
-          createCookie({
-            name: 'mangadex_title_mode',
-            value: '2',
-            domain: MANGADEX_DOMAIN,
-          }),
-        ],
-      })
-
-      // eslint-disable-next-line no-await-in-loop
-      const response = await this.requestManager.schedule(request, 1)
-      const selector = this.cheerio.load(response.data)
-
-      const updatedManga = this.parser.filterUpdatedManga(selector, time, allManga)
-      hasManga = updatedManga.hasMore
-
-      if (updatedManga.updates.length > 0) {
-        // If we found updates on this page, notify the app
-        // This is needed so that the app can save the updates
-        // in case the background job is killed by iOS
-        mangaUpdatesFoundCallback(createMangaUpdates({ ids: updatedManga.updates }))
-      }
-    }
   }
 
   constructSearchRequest(query: SearchRequest, page: number, items = 50) {
