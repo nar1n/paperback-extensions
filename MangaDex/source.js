@@ -616,7 +616,6 @@ const MANGA_ENDPOINT = PAPERBACK_API + '/manga';
 const CHAPTER_LIST_ENDPOINT = MANGADEX_API_V2 + '/manga';
 const CHAPTER_DETAILS_ENDPOINT = MANGADEX_API_V2 + '/chapter';
 const SEARCH_ENDPOINT = PAPERBACK_API + '/search';
-const MANGA_RECENT = MANGADEX_DOMAIN + '/updates';
 exports.MangaDexInfo = {
     author: 'Neko',
     description: 'Overwrites SafeDex,unlocks all mangas MangaDex has to offer and loads slightly faster. supports notifications',
@@ -639,8 +638,8 @@ class MangaDex extends paperback_extensions_common_1.Source {
         super(...arguments);
         this.parser = new Parser_1.Parser();
         this.requestManager = createRequestManager({
-            requestsPerSecond: 2,
-            requestTimeout: 10000,
+            requestsPerSecond: 1,
+            requestTimeout: 15000,
         });
     }
     getMangaShareUrl(mangaId) {
@@ -709,7 +708,7 @@ class MangaDex extends paperback_extensions_common_1.Source {
         return __awaiter(this, void 0, void 0, function* () {
             const request = createRequestObject({
                 url: `${CHAPTER_DETAILS_ENDPOINT}/${chapterId}`,
-                method: 'GET'
+                method: 'GET',
             });
             const response = yield this.requestManager.schedule(request, 1);
             const json = JSON.parse(response.data);
@@ -738,10 +737,7 @@ class MangaDex extends paperback_extensions_common_1.Source {
         return __awaiter(this, void 0, void 0, function* () {
             const sections = [
                 {
-                    request: createRequestObject({
-                        url: MANGA_RECENT,
-                        method: 'GET',
-                    }),
+                    request: this.constructSearchRequest({}, 1, 10),
                     section: createHomeSection({
                         id: 'recently_updated',
                         title: 'RECENTLY UPDATED TITLES',
@@ -767,7 +763,7 @@ class MangaDex extends paperback_extensions_common_1.Source {
                         title: 'UPDATED ACTION TITLES',
                         view_more: true,
                     }),
-                },
+                }
             ];
             const promises = [];
             for (const section of sections) {
@@ -775,62 +771,14 @@ class MangaDex extends paperback_extensions_common_1.Source {
                 sectionCallback(section.section);
                 // Get the section data
                 promises.push(this.requestManager.schedule(section.request, 1).then(response => {
-                    var _a, _b, _c, _d, _e;
-                    if (section.section.id == 'recently_updated') {
-                        let $ = this.cheerio.load(response.data);
-                        let updates = [];
-                        let elem = $('tr', 'tbody').toArray();
-                        let i = 0;
-                        while (i < elem.length) {
-                            let hasImg = false;
-                            let idStr = (_a = $('a.manga_title', elem[i]).attr('href')) !== null && _a !== void 0 ? _a : '';
-                            let id = (_c = ((_b = idStr.match(/(\d+)(?=\/)/)) !== null && _b !== void 0 ? _b : '')[0]) !== null && _c !== void 0 ? _c : '';
-                            let title = (_d = $('a.manga_title', elem[i]).text()) !== null && _d !== void 0 ? _d : '';
-                            let image = (_e = (MANGADEX_DOMAIN + $('img', elem[i]).attr('src'))) !== null && _e !== void 0 ? _e : '';
-                            // in this case: badge will be number of updates
-                            // that the manga has received within last week
-                            let badge = 0;
-                            let pIcon = 'eye.fill';
-                            let sIcon = 'clock.fill';
-                            let subTitle = '';
-                            let pText = '';
-                            let sText = '';
-                            let first = true;
-                            i++;
-                            while (!hasImg && i < elem.length) {
-                                // for the manga tile, we only care about the first/latest entry
-                                if (first && !hasImg) {
-                                    subTitle = $('a', elem[i]).first().text();
-                                    pText = $('.text-center.text-info', elem[i]).text();
-                                    sText = $('time', elem[i]).text().replace('ago', '').trim();
-                                    first = false;
-                                }
-                                badge++;
-                                i++;
-                                hasImg = $(elem[i]).find('img').length > 0;
-                            }
-                            updates.push(createMangaTile({
-                                id,
-                                image,
-                                title: createIconText({ text: title }),
-                                subtitleText: createIconText({ text: subTitle }),
-                                primaryText: createIconText({ text: pText, icon: pIcon }),
-                                secondaryText: createIconText({ text: sText, icon: sIcon }),
-                                badge
-                            }));
-                        }
-                        section.section.items = updates;
-                    }
-                    else {
-                        const json = JSON.parse(response.data);
-                        const tiles = this.parser.parseMangaTiles(json);
-                        section.section.items = tiles;
-                    }
+                    const json = JSON.parse(response.data);
+                    const tiles = this.parser.parseMangaTiles(json);
+                    section.section.items = tiles;
                     sectionCallback(section.section);
                 }));
-                // Make sure the function completes
-                yield Promise.all(promises);
             }
+            // Make sure the function completes
+            yield Promise.all(promises);
         });
     }
     filterUpdatedManga(mangaUpdatesFoundCallback, time, ids) {
@@ -895,6 +843,30 @@ class MangaDex extends paperback_extensions_common_1.Source {
             headers: {
                 'content-type': 'application/json',
             },
+        });
+    }
+    getViewMoreItems(homepageSectionId, metadata) {
+        var _a, _b, _c, _d;
+        return __awaiter(this, void 0, void 0, function* () {
+            const requests = {
+                shounen: this.constructSearchRequest({
+                    includeDemographic: ['1'],
+                }, (_a = metadata === null || metadata === void 0 ? void 0 : metadata.page) !== null && _a !== void 0 ? _a : 1, 50),
+                action: this.constructSearchRequest({
+                    includeGenre: ['2'],
+                }, (_b = metadata === null || metadata === void 0 ? void 0 : metadata.page) !== null && _b !== void 0 ? _b : 1, 50),
+                recently_updated: this.constructSearchRequest({}, (_c = metadata === null || metadata === void 0 ? void 0 : metadata.page) !== null && _c !== void 0 ? _c : 1, 50),
+            };
+            const request = requests[homepageSectionId];
+            const response = yield this.requestManager.schedule(request, 1);
+            const json = JSON.parse(response.data);
+            const tiles = this.parser.parseMangaTiles(json);
+            return createPagedResults({
+                results: tiles,
+                metadata: {
+                    page: ((_d = metadata === null || metadata === void 0 ? void 0 : metadata.page) !== null && _d !== void 0 ? _d : 1) + 1,
+                },
+            });
         });
     }
 }
