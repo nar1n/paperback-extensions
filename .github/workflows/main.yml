@@ -1,11 +1,11 @@
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
       types: [closed]
       branches:
-          - master
+          - main
 
 name: Bundle and Publish Sources
 jobs:
@@ -31,7 +31,7 @@ jobs:
         continue-on-error: true
 
       - name: Deploy
-        uses: s0/git-publish-subdir-action@master
+        uses: s0/git-publish-subdir-action@main
         env:
           REPO: self
           BRANCH: gh-pages
