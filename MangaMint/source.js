@@ -598,7 +598,7 @@ exports.MangaMint = exports.MangaMintInfo = void 0;
 const paperback_extensions_common_1 = require("paperback-extensions-common");
 const MANGAMINT_API_BASE = "https://mangamint.kaedenoki.net/api";
 exports.MangaMintInfo = {
-    version: "1.0.1",
+    version: "1.0.3",
     name: "MangaMint",
     icon: "icon.png",
     author: "nar1n",
@@ -609,12 +609,8 @@ exports.MangaMintInfo = {
     websiteBaseURL: MANGAMINT_API_BASE,
     sourceTags: [
         {
-            text: 'Buggy',
-            type: paperback_extensions_common_1.TagType.RED
-        },
-        {
             text: 'Slow',
-            type: paperback_extensions_common_1.TagType.RED
+            type: paperback_extensions_common_1.TagType.BLUE
         }
     ]
 };
@@ -636,6 +632,7 @@ class MangaMint extends paperback_extensions_common_1.Source {
             });
             let response = yield this.requestManager.schedule(request, 1);
             let mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+            // Checks that json returned is not empty
             while (requestTry <= 3 && mangaDetails["title"] == "") {
                 response = yield this.requestManager.schedule(request, 1);
                 mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
@@ -645,14 +642,27 @@ class MangaMint extends paperback_extensions_common_1.Source {
             if (mangaDetails["status"] == "Ongoing") {
                 mangaStatus = paperback_extensions_common_1.MangaStatus.ONGOING;
             }
+            const tags = [];
+            for (const tag of mangaDetails["genre_list"]) {
+                tags.push(createTag({
+                    id: tag['genre_name'],
+                    label: tag['genre_name']
+                }));
+            }
+            const tagSections = [createTagSection({
+                    id: 'genre',
+                    label: 'Genre',
+                    tags
+                })];
             let manga = createManga({
                 id: mangaDetails["manga_endpoint"],
                 titles: [mangaDetails["title"]],
                 image: mangaDetails["thumb"],
+                tags: tagSections,
                 rating: 5,
                 status: mangaStatus,
                 author: mangaDetails["author"],
-                desc: mangaDetails["synopsis"]
+                desc: mangaDetails["synopsis"].split('\n\t\t\t\t\t\t')[1]
             });
             return manga;
         });
@@ -667,6 +677,7 @@ class MangaMint extends paperback_extensions_common_1.Source {
             });
             let response = yield this.requestManager.schedule(request, 1);
             let mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+            // Checks that json returned is not empty
             while (requestTry <= 3 && mangaDetails["title"] == "") {
                 response = yield this.requestManager.schedule(request, 1);
                 mangaDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
@@ -674,12 +685,10 @@ class MangaMint extends paperback_extensions_common_1.Source {
             }
             let chapters = [];
             for (const chapter of mangaDetails["chapter"]) {
-                let chapterNumber = chapter["chapter_title"].match(/\d/g);
-                chapterNumber = chapterNumber.join("");
                 chapters.push(createChapter({
                     id: chapter["chapter_endpoint"],
                     mangaId: mangaId,
-                    chapNum: Number(chapter["chapter_title"].replace(/^\D+/, '')),
+                    chapNum: Number(chapter["chapter_title"].split(' ').pop()),
                     langCode: paperback_extensions_common_1.LanguageCode.INDONESIAN,
                     name: chapter["chapter_title"],
                     time: new Date()
@@ -698,6 +707,7 @@ class MangaMint extends paperback_extensions_common_1.Source {
             });
             let response = yield this.requestManager.schedule(request, 1);
             let chapterDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+            // Checks that json returned is not empty
             while (requestTry <= 3 && chapterDetails["chapter_pages"] == 0) {
                 response = yield this.requestManager.schedule(request, 1);
                 chapterDetails = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
@@ -726,13 +736,18 @@ class MangaMint extends paperback_extensions_common_1.Source {
             });
             const response = yield this.requestManager.schedule(request, 3);
             let searchResults = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+            let collectedIds = [];
             let mangas = [];
             for (const mangaDetails of searchResults["manga_list"]) {
-                mangas.push(createMangaTile({
-                    id: mangaDetails["endpoint"],
-                    image: mangaDetails["thumb"],
-                    title: createIconText({ text: mangaDetails["title"] }),
-                }));
+                const id = mangaDetails["endpoint"];
+                if (!collectedIds.includes(id)) {
+                    mangas.push(createMangaTile({
+                        id: id,
+                        image: mangaDetails["thumb"],
+                        title: createIconText({ text: mangaDetails["title"] })
+                    }));
+                    collectedIds.push(id);
+                }
             }
             return createPagedResults({
                 results: mangas
@@ -741,47 +756,82 @@ class MangaMint extends paperback_extensions_common_1.Source {
     }
     getHomePageSections(sectionCallback) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Send the empty homesection back so the app can preload the section
-            var recommendedSection = createHomeSection({ id: "recommended", title: "RECOMMENDED MANGAS" });
-            sectionCallback(recommendedSection);
-            var popularSection = createHomeSection({ id: "popular", title: "POPULAR MANGAS" });
-            sectionCallback(popularSection);
-            const requestRecommended = createRequestObject({
-                url: `${MANGAMINT_API_BASE}/recommended`,
-                method: "GET"
-            });
-            const responseRecommended = yield this.requestManager.schedule(requestRecommended, 3);
-            let resultRecommended = typeof responseRecommended.data === "string" ? JSON.parse(responseRecommended.data) : responseRecommended.data;
-            let recommendedMangas = [];
-            for (const mangaDetails of resultRecommended["manga_list"]) {
-                recommendedMangas.push(createMangaTile({
-                    id: mangaDetails["endpoint"],
-                    image: mangaDetails["thumb"],
-                    title: createIconText({ text: mangaDetails["title"] }),
-                }));
+            const sections = [
+                {
+                    request: createRequestObject({
+                        url: `${MANGAMINT_API_BASE}/recommended`,
+                        method: 'GET'
+                    }),
+                    section: createHomeSection({
+                        id: 'recommended',
+                        title: 'RECOMMENDED MANGA',
+                        view_more: false,
+                    }),
+                },
+                {
+                    request: createRequestObject({
+                        url: `${MANGAMINT_API_BASE}/manga/popular/1`,
+                        method: 'GET'
+                    }),
+                    section: createHomeSection({
+                        id: 'popular',
+                        title: 'POPULAR MANGA',
+                        view_more: true
+                    }),
+                },
+            ];
+            const promises = [];
+            for (const section of sections) {
+                // Let the app load empty sections
+                sectionCallback(section.section);
+                const response = yield this.requestManager.schedule(section.request, 3);
+                const result = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+                let sectionManga = [];
+                for (const manga of result["manga_list"]) {
+                    sectionManga.push(createMangaTile({
+                        id: manga["endpoint"],
+                        image: manga["thumb"],
+                        title: createIconText({ text: manga["title"] })
+                    }));
+                }
+                section.section.items = sectionManga;
+                sectionCallback(section.section);
             }
-            recommendedSection.items = recommendedMangas;
-            sectionCallback(recommendedSection);
-            const requestPopular = createRequestObject({
-                url: `${MANGAMINT_API_BASE}/manga/popular/1`,
-                method: "GET"
-            });
-            const responsePopular = yield this.requestManager.schedule(requestPopular, 3);
-            let resultPopular = typeof responsePopular.data === "string" ? JSON.parse(responsePopular.data) : responsePopular.data;
-            let popularMangas = [];
-            for (const mangaDetails of resultPopular["manga_list"]) {
-                popularMangas.push(createMangaTile({
-                    id: mangaDetails["endpoint"],
-                    image: mangaDetails["thumb"],
-                    title: createIconText({ text: mangaDetails["title"] }),
-                }));
-            }
-            popularSection.items = popularMangas;
-            sectionCallback(popularSection);
+            yield Promise.all(promises);
         });
     }
-    getMangaShareUrl(mangaId) {
-        return `${MANGAMINT_API_BASE}/manga/detail/${mangaId}`;
+    getViewMoreItems(homepageSectionId, metadata) {
+        var _a, _b;
+        return __awaiter(this, void 0, void 0, function* () {
+            let page = (_a = metadata === null || metadata === void 0 ? void 0 : metadata.page) !== null && _a !== void 0 ? _a : 1;
+            let collectedIds = (_b = metadata === null || metadata === void 0 ? void 0 : metadata.collectedIds) !== null && _b !== void 0 ? _b : [];
+            let mangaTiles = [];
+            let mData = undefined;
+            const request = createRequestObject({
+                url: `${MANGAMINT_API_BASE}/manga/popular/${page}`,
+                method: 'GET'
+            });
+            const response = yield this.requestManager.schedule(request, 3);
+            const result = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+            for (const manga of result["manga_list"]) {
+                const id = manga["endpoint"];
+                if (!collectedIds.includes(id)) {
+                    mangaTiles.push(createMangaTile({
+                        id: id,
+                        image: manga["thumb"],
+                        title: createIconText({ text: manga["title"] })
+                    }));
+                    collectedIds.push(id);
+                }
+            }
+            if (page <= 29) {
+                mData = { page: (page + 1), collectedIds: collectedIds };
+            }
+            return createPagedResults({
+                results: mangaTiles,
+                metadata: mData
+            });
+        });
     }
 }
 exports.MangaMint = MangaMint;
