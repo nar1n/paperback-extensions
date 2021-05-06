@@ -173,8 +173,8 @@ export class MangaDex extends Source {
     const json = typeof response.data === "string" ? JSON.parse(response.data) : response.data
 
     const mangaDetails = json.data.attributes
-    const titles = [mangaDetails.title[Object.keys(mangaDetails.title)[0]]].concat(mangaDetails.altTitles.map((x: any)  => x[Object.keys(x)[0]]))
-    const desc = mangaDetails.description.en
+    const titles = [mangaDetails.title[Object.keys(mangaDetails.title)[0]]].concat(mangaDetails.altTitles.map((x: any)  => this.decodeHTMLEntity(x[Object.keys(x)[0]])))
+    const desc = this.decodeHTMLEntity(mangaDetails.description.en)
 
     let status = MangaStatus.COMPLETED
     if (mangaDetails.status == 'ongoing') {
@@ -195,8 +195,8 @@ export class MangaDex extends Source {
     const authors = author.concat(artist)
     if (authors.length != 0) {
       const authorsDict = await this.getAuthors(authors)
-      author = author.map((x: any) => authorsDict[x]).join(', ')
-      artist = artist.map((x: any) => authorsDict[x]).join(', ')
+      author = author.map((x: any) => this.decodeHTMLEntity(authorsDict[x])).join(', ')
+      artist = artist.map((x: any) => this.decodeHTMLEntity(authorsDict[x])).join(', ')
     }
 
     return createManga({
@@ -242,7 +242,7 @@ export class MangaDex extends Source {
       for (const chapter of json.results) {
         const chapterId = chapter.data.id
         const chapterDetails = chapter.data.attributes
-        const name = chapterDetails.title
+        const name =  this.decodeHTMLEntity(chapterDetails.title)
         const chapNum = Number(chapterDetails?.chapter)
         const volume = Number(chapterDetails?.volume)
         let langCode = chapterDetails.translatedLanguage?.replace('en', 'gb')
@@ -276,7 +276,7 @@ export class MangaDex extends Source {
     }
     const groupDict = await this.getGroups(groupIds)
     const chapters: Chapter[] = chaptersUnparsed.map((x: any) => {
-      x.group = x.groups.map((x: any) => groupDict[x]).join(', ') + ''
+      x.group = x.groups.map((x: any) => this.decodeHTMLEntity(groupDict[x])).join(', ') + ''
       delete x.groups
       return createChapter(x)
     })
@@ -332,7 +332,7 @@ export class MangaDex extends Source {
     for (const manga of json.results) {
       const mangaId = manga.data.id
       const mangaDetails = manga.data.attributes
-      const title = mangaDetails.title[Object.keys(mangaDetails.title)[0]]
+      const title = this.decodeHTMLEntity(mangaDetails.title[Object.keys(mangaDetails.title)[0]])
 
       results.push(createMangaTile({
         id: mangaId,
@@ -397,7 +397,7 @@ export class MangaDex extends Source {
           for (const manga of json.results) {
             const mangaId = manga.data.id
             const mangaDetails = manga.data.attributes
-            const title = mangaDetails.title[Object.keys(mangaDetails.title)[0]]
+            const title = this.decodeHTMLEntity(mangaDetails.title[Object.keys(mangaDetails.title)[0]])
 
             results.push(createMangaTile({
               id: mangaId,
@@ -448,7 +448,7 @@ export class MangaDex extends Source {
     for (const manga of json.results) {
       const mangaId = manga.data.id
       const mangaDetails = manga.data.attributes
-      const title = mangaDetails.title[Object.keys(mangaDetails.title)[0]]
+      const title = this.decodeHTMLEntity(mangaDetails.title[Object.keys(mangaDetails.title)[0]])
 
       if (!collectedIds.includes(mangaId)) {
         results.push(createMangaTile({
@@ -511,4 +511,15 @@ export class MangaDex extends Source {
       }))
     }
   }
+
+  decodeHTMLEntity(str: string): string {
+        return str.replace(/&#(\d+);/g, function (match, dec) {
+            return String.fromCharCode(dec);
+        })
+         .replace(/&amp;/g, '&')
+         .replace(/&lt;/g, '<')
+         .replace(/&gt;/g, '>')
+         .replace(/&quot;/g, '\"')
+         .replace(/&#039;/g, '\'');
+    }
 }
