@@ -43,6 +43,49 @@ export const MangaDexInfo: SourceInfo = {
 
 export class MangaDex extends Source {
 
+  languageMapping: any = {
+    'en': 'gb',
+    'pt-br': 'pt',
+    'ru': 'ru',
+    'fr': 'fr',
+    'es-la': 'es',
+    'pl': 'pl',
+    'tr': 'tr',
+    'it': 'it',
+    'es': 'es',
+    'id': 'id',
+    'vi': 'vn',
+    'hu': 'hu',
+    'zh': 'cn',
+    // 'ar': '', // Arabic
+    'de': 'de',
+    'zh-hk': 'hk',
+    // 'ca': '', // Catalan
+    'th': 'th',
+    'bg': 'bg',
+    // 'fa': '', // Faroese
+    'uk': 'ua',
+    'mn': 'mn',
+    // 'he': '', // Hebrew
+    'ro': 'ro',
+    'ms': 'my',
+    // 'tl': '', // Tagalog
+    'ja': 'jp',
+    'ko': 'kr',
+    // 'hi': '', // Hindi
+    // 'my': '', // Malaysian
+    'cs': 'cz',
+    'pt': 'pt',
+    'nl': 'nl',
+    // 'sv': '', // Swedish
+    // 'bn': '', // Bengali
+    'no': 'no',
+    'lt': 'lt',
+    // 'sr': '', // Serbian
+    'da': 'dk',
+    'fi': 'fi',
+  }
+
   requestManager = createRequestManager({
     requestsPerSecond: 4,
     requestTimeout: 15000,
@@ -163,7 +206,7 @@ export class MangaDex extends Source {
     } else {
       newMangaId = mangaId
     }
-    
+
     const request = createRequestObject({
       url: `${MANGADEX_API}/manga/${newMangaId}`,
       method: 'GET',
@@ -245,10 +288,13 @@ export class MangaDex extends Source {
         const name =  this.decodeHTMLEntity(chapterDetails.title)
         const chapNum = Number(chapterDetails?.chapter)
         const volume = Number(chapterDetails?.volume)
-        let langCode = chapterDetails.translatedLanguage?.replace('en', 'gb')
-        if (!langCode) {
+        let langCode: string = chapterDetails.translatedLanguage
+        if (Object.keys(this.languageMapping).includes(langCode)) {
+          langCode = this.languageMapping[chapterDetails.translatedLanguage]
+        } else {
           langCode = '_unkown'
         }
+
         const time = new Date(chapterDetails.publishAt)
 
         let groups = chapter.relationships.filter((x: any) => x.type == 'scanlation_group').map((x: any) => x.id)
