@@ -202,7 +202,7 @@ export class MangaDex extends Source {
     return createManga({
       id: mangaId,
       titles,
-      image: 'https://mangadex.org/images/avatars/default1.jpg',
+      image: 'https://i.imgur.com/6TrIues.jpg',
       author,
       artist,
       desc,
@@ -337,7 +337,7 @@ export class MangaDex extends Source {
       results.push(createMangaTile({
         id: mangaId,
         title: createIconText({text: title}),
-        image: 'https://mangadex.org/images/avatars/default1.jpg'
+        image: 'https://i.imgur.com/6TrIues.jpg'
       }))
     }
 
@@ -402,7 +402,7 @@ export class MangaDex extends Source {
             results.push(createMangaTile({
               id: mangaId,
               title: createIconText({text: title}),
-              image: ''
+              image: 'https://i.imgur.com/6TrIues.jpg'
             }))
           }
 
@@ -454,7 +454,7 @@ export class MangaDex extends Source {
         results.push(createMangaTile({
           id: mangaId,
           title: createIconText({text: title}),
-          image: ''
+          image: 'https://i.imgur.com/6TrIues.jpg'
         }))
         collectedIds.push(mangaId)
       }
