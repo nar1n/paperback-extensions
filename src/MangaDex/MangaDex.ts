@@ -44,7 +44,7 @@ export const MangaDexInfo: SourceInfo = {
 export class MangaDex extends Source {
 
   requestManager = createRequestManager({
-    requestsPerSecond: 2,
+    requestsPerSecond: 4,
     requestTimeout: 15000,
   })
 
