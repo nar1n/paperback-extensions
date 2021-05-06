@@ -247,7 +247,6 @@ export class MangaDex extends Source {
         const volume = Number(chapterDetails?.volume)
         let langCode = chapterDetails.translatedLanguage?.replace('en', 'gb')
         if (!langCode) {
-          console.log(chapterId)
           langCode = '_unkown'
         }
         const time = new Date(chapterDetails.publishAt)

@@ -16,9 +16,6 @@ describe('MangaDex Tests', function () {
      * return proper results, as it is limited to searching 30 days back due to extremely long processing times otherwise.
      */
     const mangaId = '32d76d19-8a05-4db0-9fc2-e0b0648fe9d0' // Solo Leveling
-    // const mangaId = '1' // Tower of God
-    // const mangaId = '37f5cce0-8070-4ada-96e5-fa24b1bd4ff9' // Kaguya UUID
-    // const mangaId = '17274' //Kaguya Legacy
 
     it("Retrieve Manga Details", async () => {
         let details = await wrapper.getMangaDetails(source, mangaId);
