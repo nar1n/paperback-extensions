@@ -421,8 +421,8 @@ export class MangaDex extends Source {
         const chapterId = chapter.data.id
         const chapterDetails = chapter.data.attributes
         const name =  this.decodeHTMLEntity(chapterDetails.title)
-        const chapNum = Number(chapterDetails?.chapter?.replace(/(?<!\d)\.(?!\d)|[^\d.-]/g, ''))
-        const volume = Number(chapterDetails?.volume?.replace(/(?<!\d)\.(?!\d)|[^\d.-]/g, ''))
+        const chapNum = Number(chapterDetails?.chapter)
+        const volume = Number(chapterDetails?.volume)
         let langCode: string = chapterDetails.translatedLanguage
         if (Object.keys(this.languageMapping).includes(langCode)) {
           langCode = this.languageMapping[chapterDetails.translatedLanguage]
