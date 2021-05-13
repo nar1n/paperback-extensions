@@ -16,6 +16,8 @@ import {
   Tag
 } from 'paperback-extensions-common'
 
+const entities = require("entities")
+
 const MANGADEX_DOMAIN = 'https://mangadex.org'
 const MANGADEX_API = 'https://api.mangadex.org'
 
@@ -24,7 +26,7 @@ export const MangaDexInfo: SourceInfo = {
   description: 'Extension that pulls manga from MangaDex',
   icon: 'icon.png',
   name: 'MangaDex',
-  version: '1.0.2',
+  version: '1.0.3',
   authorWebsite: 'https://github.com/nar1n',
   websiteBaseURL: MANGADEX_DOMAIN,
   hentaiSource: false,
@@ -419,8 +421,8 @@ export class MangaDex extends Source {
         const chapterId = chapter.data.id
         const chapterDetails = chapter.data.attributes
         const name =  this.decodeHTMLEntity(chapterDetails.title)
-        const chapNum = Number(chapterDetails?.chapter)
-        const volume = Number(chapterDetails?.volume)
+        const chapNum = Number(chapterDetails?.chapter?.replace(/(?<!\d)\.(?!\d)|[^\d.-]/g, ''))
+        const volume = Number(chapterDetails?.volume?.replace(/(?<!\d)\.(?!\d)|[^\d.-]/g, ''))
         let langCode: string = chapterDetails.translatedLanguage
         if (Object.keys(this.languageMapping).includes(langCode)) {
           langCode = this.languageMapping[chapterDetails.translatedLanguage]
@@ -719,28 +721,6 @@ export class MangaDex extends Source {
   }
 
   decodeHTMLEntity(str: string): string {
-        return str.replace(/&#(\d+);/g, function (match, dec) {
-            return String.fromCharCode(dec);
-        })
-         .replace(/&amp;/g, '&')
-         .replace(/&lt;/g, '<')
-         .replace(/&gt;/g, '>')
-         .replace(/&quot;/g, '\"')
-         .replace(/&mdash;/g, '—')
-         .replace(/&ndash;/g, '–')
-         .replace(/&rsquo;/g, '’')
-         .replace(/&grave;/g, '`')
-         .replace(/&apos;/g, '\'')
-         .replace(/&quest;/g, '?')
-         .replace(/&iquest;/g, '¿')
-         .replace(/&excl;/g, '!')
-         .replace(/&num;/g, '#')
-         .replace(/&dollar;/g, '$')
-         .replace(/&percnt;/g, '%')
-         .replace(/&commat;/g, '@')
-         .replace(/&ldquo;/g, '“')
-         .replace(/&rdquo;/g, '”')
-         .replace(/&hellip;/g, '…')
-         .replace(/&hearts;/g, '♥')
-    }
+    return entities.decodeHTML(str)
+  }
 }
