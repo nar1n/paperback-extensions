@@ -281,7 +281,7 @@ export class MangaDex extends Source {
     let image: string
     if (coverId) {
       const coversDict = await this.getCovers([coverId])
-      image = `${COVER_BASE_URL}/${mangaId}/${coversDict[coverId]}`
+      image = `${COVER_BASE_URL}/${newMangaId}/${coversDict[coverId]}`
     } else {
       image = 'https://i.imgur.com/6TrIues.jpg'
     }
