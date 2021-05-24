@@ -20,6 +20,7 @@ const entities = require("entities")
 
 const MANGADEX_DOMAIN = 'https://mangadex.org'
 const MANGADEX_API = 'https://api.mangadex.org'
+const COVER_BASE_URL = 'https://uploads.mangadex.org/covers'
 
 export const MangaDexInfo: SourceInfo = {
   author: 'nar1n',
@@ -199,135 +200,30 @@ export class MangaDex extends Source {
     return json.baseUrl
   }
 
-  async getImageLink(links: { [identifier: string]: number }, extraResults = false): Promise<string>{    
-    /*
-        Return a cover url determined using one of the providers passed in links
-        extraResults: boolean, if the function should use extra requests to get a cover url
-        
-        Existing providers
-          'mu' => MangaUpdates 
-          'mal' => MyAnimeList
-          'nu' => NovelUpdates
-          'raw' => Raw
-          'engtl' => Official Eng
-          'cdj' => CDJapan
-          'amz' => Amazon.co.jp
-          'ebj' => eBookJapan
-          'bw' => Bookwalker
-          'al' => AniList
-          'kt' => Kitsu
-          'ap' => Anime-Planet 
-          'dj' => Doujinshi.org
-        
-        Implemented providers: Kitsu, MyAnimeList, AniList, MangaUpdates, Anime-Planet
-     */
+  async getCovers(coverIds: string[]): Promise<{[id: string]: string}> {
+    let coversDict:{[id: string]: string} = {}
 
-    if (links === null) {
-      // Default cover
-      return 'https://i.imgur.com/6TrIues.jpg'
-    }
-    
-    // Kitsu
-    if (links.kt !== undefined) {
-      if (!isNaN(Number(links.kt))) {
-        // Available sizes: tiny, small, medium, large
-        return `https://media.kitsu.io/manga/poster_images/${links.kt}/small.jpg`
-      }
-    }
-    
-    if (extraResults) {
-      // MyAnimeList
-      if (links.mal !== undefined) {
-        // We use Jikan API to get the image link
-        // Doc: https://jikan.docs.apiary.io/#reference/0/manga
-        // Available sizes: small, large
-
-
-        const request = createRequestObject({
-          url: `https://api.jikan.moe/v3/manga/${links.mal}/pictures`,
-          method: 'GET',
-        })
-        const response = await this.requestManager.schedule(request, 1)
-        const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data
-
-        if (data.pictures !== undefined) {
-          if (data.pictures.length > 0) {
-            return data.pictures[0].small
-          }
-        }
+    let url = `${MANGADEX_API}/cover?limit=100`
+    let index = 0
+    for (const coverId of coverIds) {
+        url += `&ids[${index}]=${coverId}`
+        index += 1
       }
 
-      // AniList
-      if (links.al !== undefined) {
-        // Available sizes: medium, large, extraLarge
-        // Doc: https://anilist.gitbook.io/anilist-apiv2-docs/overview/graphql/getting-started
+    const request = createRequestObject({
+      url,
+      method: 'GET',
+    })
 
-        const query = "query ($id: Int) { Media (id: $id, type: MANGA) {coverImage {large}}}"
+    const response = await this.requestManager.schedule(request, 1)
+    const json = typeof response.data === "string" ? JSON.parse(response.data) : response.data
 
-        var variables = {
-          id: links.al
-        };
-          
-        const request = createRequestObject({
-          url: 'https://graphql.anilist.co',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          data: JSON.stringify({
-              query: query,
-              variables: variables
-          })
-        })
-        
-        const response = await this.requestManager.schedule(request, 1)
-        const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data
-        
-        // data has the format {"data": {"Media": {"coverImage": {"large": "URL"}}}}
-        return data.data.Media.coverImage.large
-      }
-
-      // Currently broken
-      // // MangaUpdates
-      // if (links.mu !== undefined) {
-      //   // MangaUpdates does not have an API
-      //   const request = createRequestObject({
-      //     url: `https://www.mangaupdates.com/series.html?id=${links.mu}`,
-      //     method: 'GET',
-      //   })
-      //   const response = await this.requestManager.schedule(request, 1)
-      //   const $ = this.cheerio.load(response.data)
-
-      //   const url = $('.sContent .img-fluid').attr('src')
-
-      //   if (url !== undefined){
-      //     return url
-      //   }
-      // }
-
-      // Anime-Planet
-      if (links.ap !== undefined) {
-        // Anime-Planet does not have an API
-        const request = createRequestObject({
-          url: `https://www.anime-planet.com/manga/${links.ap}`,
-          method: 'GET',
-        })
-        const response = await this.requestManager.schedule(request, 1)
-        const $ = this.cheerio.load(response.data)
-
-        const path = $('.screenshots').attr('src')
-
-        if (path !== undefined){
-          return `https://www.anime-planet.com${path}`
-        }
-      }
+    for (const entry of json.results) {
+      coversDict[entry.data.id] = entry.data.attributes.fileName
     }
 
-    // Default cover
-    return 'https://i.imgur.com/6TrIues.jpg'
+    return coversDict
   }
-
 
   async getMangaDetails(mangaId: string): Promise<Manga> {
     let newMangaId: string
@@ -350,7 +246,6 @@ export class MangaDex extends Source {
     const mangaDetails = json.data.attributes
     const titles = [mangaDetails.title[Object.keys(mangaDetails.title)[0]]].concat(mangaDetails.altTitles.map((x: any)  => this.decodeHTMLEntity(x[Object.keys(x)[0]])))
     const desc = this.decodeHTMLEntity(mangaDetails.description.en).replace(/\[\/{0,1}[bus]\]/g, '')  // Get rid of BBcode tags
-    
 
     let status = MangaStatus.COMPLETED
     if (mangaDetails.status == 'ongoing') {
@@ -375,10 +270,19 @@ export class MangaDex extends Source {
       artist = artist.map((x: any) => this.decodeHTMLEntity(authorsDict[x])).join(', ')
     }
 
+    const coverId = json.relationships.filter((x: any) => x.type == 'cover_art').map((x: any) => x.id)[0]
+    let image: string
+    if (coverId) {
+      const coversDict = await this.getCovers([coverId])
+      image = `${COVER_BASE_URL}/${mangaId}/${coversDict[coverId]}`
+    } else {
+      image = 'https://i.imgur.com/6TrIues.jpg'
+    }
+
     return createManga({
       id: mangaId,
       titles,
-      image: await this.getImageLink(mangaDetails.links, true),
+      image,
       author,
       artist,
       desc,
@@ -512,15 +416,23 @@ export class MangaDex extends Source {
 
     if(json.results === undefined) {throw new Error(`Failed to parse json for the given search`)}
 
+    const coverIds = json.results.map((x: any) => x.relationships.filter((x: any) => x.type == 'cover_art').map((x: any) => x.id)[0]).filter((x: any) => x != undefined)
+    let coversDict:{[id: string]: string} = {}
+    if (coverIds.length > 0) {
+      coversDict = await this.getCovers(coverIds)
+    }
+
     for (const manga of json.results) {
       const mangaId = manga.data.id
       const mangaDetails = manga.data.attributes
       const title = this.decodeHTMLEntity(mangaDetails.title[Object.keys(mangaDetails.title)[0]])
+      const coverId = manga.relationships.filter((x: any) => x.type == 'cover_art').map((x: any) => x.id)[0]
+      const image = Object.keys(coversDict).includes(coverId) ? `${COVER_BASE_URL}/${mangaId}/${coversDict[coverId]}` : 'https://i.imgur.com/6TrIues.jpg'
 
       results.push(createMangaTile({
         id: mangaId,
         title: createIconText({text: title}),
-        image: await this.getImageLink(mangaDetails.links)
+        image
       }))
     }
 
@@ -580,15 +492,23 @@ export class MangaDex extends Source {
 
           if(json.results === undefined) throw new Error(`Failed to parse json results for section ${section.section.title}`)
 
+          const coverIds = json.results.map((x: any) => x.relationships.filter((x: any) => x.type == 'cover_art').map((x: any) => x.id)[0]).filter((x: any) => x != undefined)
+          let coversDict:{[id: string]: string} = {}
+          if (coverIds.length > 0) {
+            coversDict = await this.getCovers(coverIds)
+          }
+
           for (const manga of json.results) {
             const mangaId = manga.data.id
             const mangaDetails = manga.data.attributes
             const title = this.decodeHTMLEntity(mangaDetails.title[Object.keys(mangaDetails.title)[0]])
+            const coverId = manga.relationships.filter((x: any) => x.type == 'cover_art').map((x: any) => x.id)[0]
+            const image = Object.keys(coversDict).includes(coverId) ? `${COVER_BASE_URL}/${mangaId}/${coversDict[coverId]}` : 'https://i.imgur.com/6TrIues.jpg'
 
             results.push(createMangaTile({
               id: mangaId,
               title: createIconText({text: title}),
-              image: await this.getImageLink(mangaDetails.links, true)
+              image
             }))
           }
 
@@ -631,28 +551,30 @@ export class MangaDex extends Source {
     const response = await this.requestManager.schedule(request, 1)
     const json = typeof response.data === "string" ? JSON.parse(response.data) : response.data
 
-    const promises: Promise<void>[] = []
-
     if(json.results === undefined) throw new Error(`Failed to parse json results for getViewMoreItems`)
+
+    const coverIds = json.results.map((x: any) => x.relationships.filter((x: any) => x.type == 'cover_art').map((x: any) => x.id)[0]).filter((x: any) => x != undefined)
+    let coversDict:{[id: string]: string} = {}
+    if (coverIds.length > 0) {
+      coversDict = await this.getCovers(coverIds)
+    }
 
     for (const manga of json.results) {
       const mangaId = manga.data.id
       const mangaDetails = manga.data.attributes
       const title = this.decodeHTMLEntity(mangaDetails.title[Object.keys(mangaDetails.title)[0]])
+      const coverId = manga.relationships.filter((x: any) => x.type == 'cover_art').map((x: any) => x.id)[0]
+      const image = Object.keys(coversDict).includes(coverId) ? `${COVER_BASE_URL}/${mangaId}/${coversDict[coverId]}` : 'https://i.imgur.com/6TrIues.jpg'
 
       if (!collectedIds.includes(mangaId)) {
-        promises.push(this.getImageLink(mangaDetails.links, true).then(imageLink => {
-          results.push(createMangaTile({
-            id: mangaId,
-            title: createIconText({text: title}),
-            image: imageLink
-          }))
-          collectedIds.push(mangaId)
+        results.push(createMangaTile({
+          id: mangaId,
+          title: createIconText({text: title}),
+          image
         }))
+        collectedIds.push(mangaId)
       }
     }
-
-    Promise.all(promises)
 
     return createPagedResults({
       results,
