@@ -65,7 +65,6 @@ export const parseMangakakalotMangaDetails = ($: CheerioStatic, mangaId: string)
     tags: tagSections,
     views,
     follows,
-    lastUpdate,
     desc: summary,
     // hentai
     hentai: false

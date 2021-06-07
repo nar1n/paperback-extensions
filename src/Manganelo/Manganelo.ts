@@ -11,7 +11,8 @@ import {
   MangaUpdates,
   RequestHeaders,
   TagType,
-  ContentRating
+  ContentRating,
+  Section
 } from "paperback-extensions-common"
 import { generateSearch, isLastPage, parseChapterDetails, parseChapters, parseHomeSections, parseMangaDetails, parseSearch, parseTags, parseUpdatedManga, parseViewMore, UpdatedManga } from "./ManganeloParser"
 
@@ -22,7 +23,7 @@ const headers = {
 }
 
 export const ManganeloInfo: SourceInfo = {
-  version: '2.1.1',
+  version: '3.0.0',
   name: 'Manganelo',
   icon: 'icon.png',
   author: 'Daniel Kovalevich',
@@ -44,7 +45,61 @@ export class Manganelo extends Source {
     requestsPerSecond: 2
   })
 
+  stateManager = createSourceStateManager({})
+
   getMangaShareUrl(mangaId: string): string { return `${MN_DOMAIN}/manga/${mangaId}` }
+
+  getSourceMenu(): Promise<Section> {
+    return Promise.resolve(createSection({
+      id: 'main',
+      header: 'Source Settings',
+      footer: '',
+      rows: () => {
+        return Promise.resolve([
+          createNavigationButton({
+            id: 'image_server',
+            value: '',
+            label: 'Image Server',
+            //@ts-ignore
+            form: createForm({
+              //@ts-ignore
+              onSubmit: (values: any) => {
+                console.log(JSON.stringify(values))
+              },
+              sections: () => {
+                return Promise.resolve([
+                  createSection({
+                    id: 'image_server_section',
+                    rows: () => {
+                      return Promise.resolve([
+                        createSelect({
+                          id: 'image_server',
+                          label: 'Image Server',
+                          //@ts-ignore
+                          options: ['server1', 'server2'],
+                          //@ts-ignore
+                          displayLabel: (option) => {
+                            switch (option) {
+                              case 'server1':
+                                return 'Server 1'
+                              case 'server2':
+                                return 'Server 2'
+                            }
+                          },
+                          //@ts-ignore
+                          value: ['server1', 'server2']
+                        })
+                      ])
+                    }
+                  })
+                ])
+              }
+            })
+          })
+        ])
+      }
+    }))
+  }
 
   async getMangaDetails(mangaId: string): Promise<Manga> {
     const request = createRequestObject({

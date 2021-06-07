@@ -108,7 +108,6 @@ export class ReadComicsOnline extends Source {
       titles: titles,
       image: `http:${image!}`,
       status: Number(status),
-      lastUpdate: released,
       tags: tags,
       desc: summary
     })

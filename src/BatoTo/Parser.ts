@@ -98,7 +98,6 @@ export class Parser {
             author: this.decodeHTMLEntity(author ?? ''),
             tags: tagSections,
             desc: this.decodeHTMLEntity(summary),
-            lastUpdate: released,
             //hentai: isHentai,
             hentai: false,
             views: views

@@ -74,8 +74,7 @@ export class Parser {
             image: image ?? '',
             status: status,
             tags: tagSections,
-            desc: this.decodeHTMLEntity(summary ?? ''),
-            lastUpdate: released
+            desc: this.decodeHTMLEntity(summary ?? '')
         })
     }
 

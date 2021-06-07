@@ -45,8 +45,7 @@ export class Parser {
         artist: artist,
         views: views,
         tags: tagSections,
-        desc: this.decodeHTMLEntity(summary ?? ''),
-        lastUpdate: released
+        desc: this.decodeHTMLEntity(summary ?? '')
       })
     }
    

@@ -601,7 +601,7 @@ export class MangaDex extends Source {
     await Promise.all(promises)
   }
 
-  async getViewMoreItems(homepageSectionId: string, metadata: any): Promise<PagedResults | null> {
+  async getViewMoreItems(homepageSectionId: string, metadata: any): Promise<PagedResults> {
     let offset: number = metadata?.offset ?? 0
     let collectedIds: string[] = metadata?.collectedIds ?? []
     let results: MangaTile[] = []
