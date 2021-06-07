@@ -15,9 +15,9 @@
   "dependencies": {
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
-    "cheerio": "^1.0.0-rc.9",
+    "cheerio": "^0.22.0",
     "paperback-cli": "^1.4.0",
-    "paperback-extensions-common": "^3.4.4",
+    "paperback-extensions-common": "^3.5.1",
     "ts-mocha": "^7.0.0",
     "tsify": "^4.0.2",
     "typescript": "^3.9.9"
