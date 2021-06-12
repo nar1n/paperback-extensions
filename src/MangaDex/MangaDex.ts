@@ -159,7 +159,7 @@ export class MangaDex extends Source {
     const response = await this.requestManager.schedule(request, 1)
     const json = typeof response.data === "string" ? JSON.parse(response.data) : response.data
 
-    return `${MANGADEX_API}/manga?limit=100&contentRating[]=none&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&contentRating[]=pornographic&includes[]=cover_art&ids[]=${json.relationships.map((x: any) => x.id).join('&ids[]=')}`
+    return `${MANGADEX_API}/manga?limit=100&contentRating[]=none&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&contentRating[]=pornographic&includes[]=cover_art&ids[]=${json.relationships.filter((x: any) => x.type == 'manga').map((x: any) => x.id).join('&ids[]=')}`
   }
 
   async getMangaDetails(mangaId: string): Promise<Manga> {
