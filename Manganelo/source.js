@@ -906,6 +906,7 @@ class Manganelo extends paperback_extensions_common_1.Source {
             const request = createRequestObject({
                 url: `${READMANGANATO_DOMAIN}/${newMangaId}/${chapterId}`,
                 method: method,
+                cookies: [createCookie({ name: 'content_server', value: 'server2', domain: READMANGANATO_DOMAIN })],
             });
             const response = yield this.requestManager.schedule(request, 1);
             const $ = this.cheerio.load(response.data);
