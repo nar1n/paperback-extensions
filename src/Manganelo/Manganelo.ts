@@ -105,6 +105,7 @@ export class Manganelo extends Source {
     const request = createRequestObject({
       url: `${READMANGANATO_DOMAIN}/${newMangaId}/${chapterId}`,
       method: method,
+      cookies: [createCookie({name: 'content_server', value: 'server2', domain: READMANGANATO_DOMAIN})],
     });
 
     const response = await this.requestManager.schedule(request, 1);
