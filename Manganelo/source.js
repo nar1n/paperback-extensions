@@ -823,7 +823,7 @@ const READMANGANATO_DOMAIN = 'https://readmanganato.com';
 const method = 'GET';
 exports.ManganeloInfo = {
     version: '2.3.0',
-    name: 'Manganelo',
+    name: 'Manganelo Image Server 2',
     icon: 'icon.png',
     author: 'Daniel Kovalevich & Netsky',
     authorWebsite: 'https://github.com/TheNetsky',
