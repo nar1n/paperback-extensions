@@ -62,31 +62,31 @@ export class MangaDex extends Source {
     'vi': 'vn',
     'hu': 'hu',
     'zh': 'cn',
-    // 'ar': '', // Arabic
+    'ar': 'sa',
     'de': 'de',
     'zh-hk': 'hk',
-    // 'ca': '', // Catalan
+    'ca': 'es', // Catalan
     'th': 'th',
     'bg': 'bg',
-    // 'fa': '', // Faroese
+    'fa': 'ir',
     'uk': 'ua',
     'mn': 'mn',
-    // 'he': '', // Hebrew
+    'he': 'il',
     'ro': 'ro',
     'ms': 'my',
-    // 'tl': '', // Tagalog
+    'tl': 'ph',
     'ja': 'jp',
     'ko': 'kr',
-    // 'hi': '', // Hindi
-    // 'my': '', // Malaysian
+    'hi': 'in',
+    'my': 'my',
     'cs': 'cz',
     'pt': 'pt',
     'nl': 'nl',
-    // 'sv': '', // Swedish
-    // 'bn': '', // Bengali
+    'sv': 'se',
+    'bn': 'bd',
     'no': 'no',
     'lt': 'lt',
-    // 'sr': '', // Serbian
+    'sr': 'rs',
     'da': 'dk',
     'fi': 'fi',
   }
