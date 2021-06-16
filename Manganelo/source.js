@@ -822,7 +822,7 @@ const MANGANATO_DOMAIN = 'https://manganato.com';
 const READMANGANATO_DOMAIN = 'https://readmanganato.com';
 const method = 'GET';
 exports.ManganeloInfo = {
-    version: '2.3.0',
+    version: '2.3.1',
     name: 'Manganelo Image Server 2',
     icon: 'icon.png',
     author: 'Daniel Kovalevich & Netsky',
@@ -838,8 +838,14 @@ exports.ManganeloInfo = {
     ]
 };
 class Manganelo extends paperback_extensions_common_1.Source {
-    getMangaShareUrl(mangaId) { return `${MN_DOMAIN}/manga/${mangaId}`; }
-    ;
+    getMangaShareUrl(mangaId) {
+        if (mangaId.includes('manga')) {
+            return `${READMANGANATO_DOMAIN}/${mangaId}`;
+        }
+        else {
+            return `${MN_DOMAIN}/manga/${mangaId}`;
+        }
+    }
     // Temporary solution until migration is out in public builds
     getNewMangaId(oldMangaId) {
         var _a;
