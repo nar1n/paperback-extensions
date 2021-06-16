@@ -20,7 +20,7 @@ const READMANGANATO_DOMAIN = 'https://readmanganato.com'
 const method = 'GET'
 
 export const ManganeloInfo: SourceInfo = {
-  version: '2.3.0',
+  version: '2.3.1',
   name: 'Manganelo',
   icon: 'icon.png',
   author: 'Daniel Kovalevich & Netsky',
@@ -37,7 +37,13 @@ export const ManganeloInfo: SourceInfo = {
 }
 
 export class Manganelo extends Source {
-  getMangaShareUrl(mangaId: string): string | null { return `${MN_DOMAIN}/manga/${mangaId}` };
+  getMangaShareUrl(mangaId: string): string {
+    if (mangaId.includes('manga')) {
+      return `${READMANGANATO_DOMAIN}/${mangaId}`
+    } else {
+      return `${MN_DOMAIN}/manga/${mangaId}`
+    }
+  }
 
   // Temporary solution until migration is out in public builds
   async getNewMangaId(oldMangaId: string): Promise<string> {
