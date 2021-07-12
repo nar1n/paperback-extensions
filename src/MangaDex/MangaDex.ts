@@ -362,7 +362,7 @@ export class MangaDex extends Source {
     const sections = [
       {
         request: createRequestObject({
-          url: await this.getCustomListRequestURL('8018a70b-1492-4f91-a584-7451d7787f7a'),
+          url: await this.getCustomListRequestURL('a153b4e6-1fcc-4f45-a990-f37f989c0d74'),
           method: 'GET',
         }),
         section: createHomeSection({
